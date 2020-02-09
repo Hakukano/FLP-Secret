@@ -34,7 +34,6 @@ int main(int args, char* argv[]) {
       s.Save(true, out_dir_path);
     } else if (cmd == "ed" && flp_util::IsInTheRange(args, 3, 4)) {
       for (const auto& in_file_path : flp_util::GetAllFiles(argv[2])) {
-        std::cout << in_file_path << std::endl;
         secret::Secret s{in_file_path};
         s.Encrypt();
         std::optional<std::string> out_dir_path{};
