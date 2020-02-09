@@ -8,6 +8,6 @@ set(CMAKE_CXX_FLAGS "-g -Wall -Werror")
 
 add_executable(secret main.cpp)
 
-add_library(slib STATIC secret.cpp util/fs/fio.cpp util/math/cmathenhance.cpp)
+add_library(slib STATIC version.cpp secret.cpp util/fs/fio.cpp util/math/cmathenhance.cpp)
 
 target_link_libraries(secret slib)
