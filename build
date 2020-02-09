@@ -1,0 +1,13 @@
+#!/bin/bash
+
+output='./.build/'
+cmdir='../'
+binfile='secret'
+
+rm -rf ${output}
+mkdir ${output}
+cd ${output}
+cmake ${cmdir} && make
+mv ${binfile} ${cmdir}${binfile}
+cd ${cmdir}
+rm -rf ${output}
