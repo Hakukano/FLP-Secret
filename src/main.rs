@@ -1,17 +1,51 @@
 use clap::{App, Arg};
+use num_traits::{NumCast, ToPrimitive};
 use rand::{thread_rng, Rng};
 use std::{
-    fs::{create_dir_all, remove_file, File},
-    io::{prelude::*, BufReader, BufWriter, Error, ErrorKind, Result},
+    fs::{create_dir_all, File},
+    io::{prelude::*, BufReader, Error, ErrorKind, Result},
     path::Path,
 };
 
+pub mod decrypt;
+pub mod encrypt;
+
+pub const CHUNK_SIZE: usize = 1024;
 const KEY_LEN_MIN: usize = 10;
 const KEY_LEN_MAX: usize = 100;
-const CHUNK_SIZE: usize = 1024;
 
-fn add_loop<T>(origin: T, adder: T, min: T, max: T) {
+pub fn add_loop<T>(origin: T, adder: T, min: T, max: T) -> T
+where
+    T: Ord + Copy + ToPrimitive + NumCast,
+{
+    let origin: u64 = NumCast::from(origin).unwrap();
+    let adder: u64 = NumCast::from(adder).unwrap();
+    let min: u64 = NumCast::from(min).unwrap();
+    let max: u64 = NumCast::from(max).unwrap();
 
+    let base = max - min + 1;
+    let adder = adder % base;
+    if origin > base - adder {
+        return NumCast::from(adder - (base - origin)).unwrap();
+    }
+    NumCast::from(origin + adder).unwrap()
+}
+
+pub fn sub_loop<T>(origin: T, suber: T, min: T, max: T) -> T
+where
+    T: Ord + Copy + ToPrimitive + NumCast,
+{
+    let origin: u64 = NumCast::from(origin).unwrap();
+    let suber: u64 = NumCast::from(suber).unwrap();
+    let min: u64 = NumCast::from(min).unwrap();
+    let max: u64 = NumCast::from(max).unwrap();
+
+    let base = max - min + 1;
+    let suber = suber % base;
+    if origin > min + suber {
+        return NumCast::from(base - (suber - (origin - min)) + min).unwrap();
+    }
+    NumCast::from(origin - suber).unwrap()
 }
 
 fn generate_key() -> Vec<u8> {
@@ -78,7 +112,8 @@ fn main() -> Result<()> {
                 .author("Jiaming Bao <baojiaming08@gmail.com>")
                 .arg(
                     Arg::new("key")
-                        .about("Use key file. Use random key if not set.")
+                        .about("Key file for decryption.")
+                        .required(true)
                         .short('k')
                         .long("key")
                         .value_name("KEY")
@@ -112,57 +147,27 @@ fn main() -> Result<()> {
         let output = encrypt_matches.value_of("output").unwrap();
         create_dir_all(output)?;
 
-        encrypt_matches
+        let input_files: Vec<_> = encrypt_matches
             .values_of("input")
             .unwrap()
             .filter(|input| Path::new(input).is_file())
-            .for_each(move |input| {
-                let file = File::open(input).unwrap_or_else(|err| panic!(err.to_string()));
-                let metadata = file
-                    .metadata()
-                    .unwrap_or_else(|err| panic!(err.to_string()));
-                let mut file_size = metadata.len();
-                let mut reader = BufReader::new(file);
-                let output = Path::new(output).join(format!(
-                    "{}.flpsdata",
-                    Path::new(input).file_name().unwrap().to_str().unwrap()
-                ));
-                if output.exists() {
-                    if let Err(err) = remove_file(output.clone()) {
-                        panic!(err.to_string());
-                    }
-                }
-                let output_file =
-                    File::create(output).unwrap_or_else(|err| panic!(err.to_string()));
-                let mut writer = BufWriter::new(output_file);
-                let mut key_pos = 0;
-                while file_size >= CHUNK_SIZE as u64 {
-                    let mut chunk = [0; CHUNK_SIZE];
-                    if let Err(err) = reader.read_exact(&mut chunk) {
-                        panic!(err.to_string());
-                    };
-                    // TODO
-                    for _ in 0..CHUNK_SIZE {
+            .collect();
 
-                        key_pos += 1;
-                    }
-                    if let Err(err) = writer.write_all(&mut chunk) {
-                        panic!(err.to_string());
-                    };
-                    file_size -= CHUNK_SIZE as u64;
-                }
-            });
+        encrypt::encrypt_files(key, output, input_files)?;
     }
     if let Some(decrypt_matches) = matches.subcommand_matches("decrypt") {
-        let key = match decrypt_matches.value_of("key") {
-            None => generate_key(),
-            Some(key) => key.as_bytes().to_vec(),
-        };
+        let key = read_key(decrypt_matches.value_of("key").unwrap())?;
 
         let output = decrypt_matches.value_of("output").unwrap();
         create_dir_all(output)?;
 
-        let files: Vec<_> = decrypt_matches.values_of("input").unwrap().collect();
+        let input_files: Vec<_> = decrypt_matches
+            .values_of("input")
+            .unwrap()
+            .filter(|input| Path::new(input).is_file())
+            .collect();
+
+        decrypt::decrypt_files(key, output, input_files)?;
     }
 
     Ok(())
