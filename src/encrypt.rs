@@ -27,7 +27,7 @@ pub fn encrypt_files(mut key: Vec<u8>, output: &str, input_files: Vec<&str>) -> 
             reader.read_exact(&mut chunk)?;
             for i in 0..CHUNK_SIZE {
                 chunk[i] = add_loop(chunk[i], *key.get(key_pos).unwrap() as u8, 0, u8::MAX);
-                key_pos = add_loop(key_pos, 1, 0, key.len());
+                key_pos = add_loop(key_pos, 1, 0, key.len() - 1);
             }
             writer.write_all(&mut chunk)?;
             file_size -= CHUNK_SIZE;
@@ -42,7 +42,7 @@ pub fn encrypt_files(mut key: Vec<u8>, output: &str, input_files: Vec<&str>) -> 
                     0,
                     u8::MAX,
                 );
-                key_pos = add_loop(key_pos, 1, 0, key.len());
+                key_pos = add_loop(key_pos, 1, 0, key.len() - 1);
             }
             writer.write_all(&mut chunk)?;
         }
