@@ -25,7 +25,7 @@ where
 
     let base = max - min + 1;
     let adder = adder % base;
-    if origin > base - adder {
+    if origin > max - adder {
         return NumCast::from(adder - (base - origin)).unwrap();
     }
     NumCast::from(origin + adder).unwrap()
@@ -42,7 +42,7 @@ where
 
     let base = max - min + 1;
     let suber = suber % base;
-    if origin > min + suber {
+    if origin < min + suber {
         return NumCast::from(base - (suber - (origin - min)) + min).unwrap();
     }
     NumCast::from(origin - suber).unwrap()
