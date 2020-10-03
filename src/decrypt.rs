@@ -50,7 +50,7 @@ pub fn decrypt_files(key: Vec<u8>, output: &str, input_files: Vec<&str>) -> Resu
             }
             writer.write_all(&mut chunk)?;
         }
-        println!("Wrote encrypted file to {}", output.to_str().unwrap());
+        println!("Wrote decrypted file to {}", output.to_str().unwrap());
     }
     println!("Done!");
     Ok(())

@@ -11,8 +11,11 @@ pub mod decrypt;
 pub mod encrypt;
 
 pub const CHUNK_SIZE: usize = 1024;
-const KEY_LEN_MIN: usize = 10;
-const KEY_LEN_MAX: usize = 100;
+
+const VERSION: &str = "2.0.0";
+
+const KEY_LEN_MIN: usize = 1000;
+const KEY_LEN_MAX: usize = 2000;
 
 pub fn add_loop<T>(origin: T, adder: T, min: T, max: T) -> T
 where
@@ -73,12 +76,12 @@ fn read_key(file: &str) -> Result<Vec<u8>> {
 fn main() -> Result<()> {
     let matches = App::new("FLP Secret")
         .about("A simple encrypt script")
-        .version("1.0.0")
+        .version(VERSION)
         .author("Jiaming Bao <baojiaming08@gmail.com>")
         .subcommand(
             App::new("encrypt")
                 .about("To encrypt file[s]")
-                .version("1.0.0")
+                .version(VERSION)
                 .author("Jiaming Bao <baojiaming08@gmail.com>")
                 .arg(
                     Arg::new("key")
@@ -108,7 +111,7 @@ fn main() -> Result<()> {
         .subcommand(
             App::new("decrypt")
                 .about("To decrypt file[s]")
-                .version("1.0.0")
+                .version(VERSION)
                 .author("Jiaming Bao <baojiaming08@gmail.com>")
                 .arg(
                     Arg::new("key")
